@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 축구선수 이미지 분류 </title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
+
+        /* ✨ 1. 무빙 그라데이션 기본 배경 ✨ */
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            margin: 0; 
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a, #0c4a6e, #1e1b4b);
+            background-size: 300% 300%;
+            animation: gradientBG 15s ease infinite alternate; 
+            color: #1e293b; 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            box-sizing: border-box;
+            position: relative; 
+            overflow-x: hidden; 
+            z-index: 0;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
+            background-size: 35px 35px; 
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; 
+            pointer-events: none; 
+            overflow: hidden;
+        }
+
+        /* ✨ 2. 몽환적으로 움직이는 빛 무리(오로라/스포트라이트) 효과 추가 ✨ */
+        .glowing-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.6;
+            animation: moveOrb 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+        }
+        
+        .orb-1 {
+            width: 50vw; height: 50vw;
+            background: #38bdf8;
+            top: -10%; left: -10%;
+            animation-delay: 0s;
+        }
+        
+        .orb-2 {
+            width: 40vw; height: 40vw;
+            background: #818cf8;
+            bottom: -10%; right: -5%;
+            animation-duration: 25s;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 35vw; height: 35vw;
+            background: #34d399;
+            top: 30%; left: 40%;
+            animation-duration: 30s;
+            animation-delay: -10s;
+            opacity: 0.4;
+        }
+
+        @keyframes moveOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10vw, 15vh) scale(1.2); }
+            100% { transform: translate(-10vw, -10vh) scale(0.9); }
+        }
+
+        /* ✨ 3. 로고 애니메이션 ✨ */
+        .bg-logo {
+            position: absolute;
+            object-fit: contain;
+            opacity: 0.25; 
+            filter: grayscale(10%) brightness(140%) drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+            animation: floatAndRotate infinite ease-in-out alternate;
+        }
+
+        @keyframes floatAndRotate {
+            0% { transform: translateY(0px) rotate(-3deg) scale(1); }
+            100% { transform: translateY(-20px) rotate(6deg) scale(1.06); }
+        }
+
+        .card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 540px;
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            text-align: center;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10; 
+        }
+
+        .logo { 
+            font-size: 30px; 
+            font-weight: 900; 
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 10px 0; 
+            letter-spacing: -0.5px;
+        }
+
+        .desc {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        button, label.upload-btn { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            color: #fff; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            font-weight: 800; 
+            transition: all 0.3s ease; 
+        }
+        button:hover, label.upload-btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.5);
+        }
+        input[type="file"] { display: none; }
+        
+        #loading { 
+            font-weight: 700; 
+            color: #10b981; 
+            font-size: 15px; 
+            display: none; 
+            background: rgba(16, 185, 129, 0.1); 
+            padding: 12px; 
+            border-radius: 10px; 
+        }
+
+        #image-wrapper {
+            width: 100%;
+            max-height: 550px;
+            border-radius: 18px;
+            overflow: hidden;
+            margin: 0 auto 30px auto;
+            display: none;
+            background: #f8fafc;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 2px solid #eff6ff;
+        }
+
+        #image-preview {
+            width: 100%;
+            height: 100%;
+            max-height: 550px;
+            object-fit: contain; 
+            display: block;
+            transition: transform 0.4s ease; 
+        }
+        #image-wrapper:hover #image-preview {
+            transform: scale(1.03); 
+        }
+
+        .info-panel {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .info-panel.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .match-rate-box {
+            background: #ffffff;
+            border: 2px solid #eff6ff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .match-rate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+        .match-rate-label { font-size: 16px; font-weight: 800; color: #475569; }
+        .match-rate-percent { font-size: 28px; font-weight: 900; color: #2563eb; }
+        
+        .progress-bg { width: 100%; height: 16px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; border-radius: 8px; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+        .info-item:last-child { margin-bottom: 0; }
+        
+        .info-emblem { 
+            width: 50px; 
+            height: 50px; 
+            object-fit: contain; 
+            margin-right: 18px; 
+            border-radius: 8px; 
+            background: #ffffff;
+            padding: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            border: 1px solid #f1f5f9;
+        }
+        
+        .info-text { display: flex; flex-direction: column; }
+        .info-label { font-size: 14px; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+        .info-val { font-size: 22px; font-weight: 800; color: #0f172a; word-break: keep-all; }
+        
+        .name-val { font-size: 26px !important; color: #1e3a8a !important; }
+        .award-val { color: #2563eb !important; font-size: 20px !important; }
+
+    </style>
+</head>
+<body>
+
+<div class="bg-decoration" id="bgDecoration">
+    <!-- 빛 무리 효과 요소들 -->
+    <div class="glowing-orb orb-1"></div>
+    <div class="glowing-orb orb-2"></div>
+    <div class="glowing-orb orb-3"></div>
+</div>
+
+<div class="card">
+    <h1 class="logo">⚽ 유명축구선수 이미지 분류</h1>
+    <p class="desc">모델을 준비한 후, 선수의 사진을 크게 올려보세요.</p>
+    
+    <div class="controls">
+        <button type="button" id="initBtn" onclick="init()">1. AI 모델 가동하기</button>
+        <div id="loading">AI 데이터를 불러오는 중입니다... ⏳</div>
+        
+        <div id="upload-section" style="display:none;">
+            <label for="imageUpload" class="upload-btn">2. 선수 사진 업로드</label>
+            <input type="file" id="imageUpload" accept="image/*" onchange="previewAndPredict(this)">
+        </div>
+    </div>
+
+    <div id="image-wrapper">
+        <img id="image-preview" src="#" alt="선수 사진" />
+    </div>
+
+    <div class="info-panel" id="info-panel">
+        
+        <div class="match-rate-box">
+            <div class="match-rate-header">
+                <span class="match-rate-label">🤖 AI 인식 일치율</span>
+                <span class="match-rate-percent" id="res-prob-text">0%</span>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-fill" id="res-prob-bar"></div>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <span style="font-size: 38px; margin-right: 18px;">👤</span>
+            <div class="info-text">
+                <span class="info-label">이름</span>
+                <span class="info-val name-val" id="res-name">-</span>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <img class="info-emblem" id="res-nation-img" src="" alt="국적 엠블럼" onerror="this.src='https://cdn-icons-png.flaticon.com/512/861/861512.png'">
+            <div class="info-text">
+                <span class="info-label">국적</span>
+                <span class="info-val" id="res-nation">-</span>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <img class="info-emblem" id="res-club-img" src="" alt="소속팀 엠블럼" onerror="this.src='https://cdn-icons-png.flaticon.com/512/861/861512.png'">
+            <div class="info-text">
+                <span class="info-label">소속팀</span>
+                <span class="info-val" id="res-club">-</span>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <span style="font-size: 38px; margin-right: 18px;">👟</span>
+            <div class="info-text">
+                <span class="info-label">역할 (포지션)</span>
+                <span class="info-val" id="res-role">-</span>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <span style="font-size: 38px; margin-right: 18px;">🏆</span>
+            <div class="info-text">
+                <span class="info-label">주요 경력</span>
+                <span class="info-val award-val" id="res-awards">-</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/JeJUwK8h-/";
+    let model, maxPredictions;
+
+    const players = {
+        "안토니오 뤼디거": { nation: "독일", club: "레알 마드리드", role: "수비수 (DF)", awards: "챔스 2회 우승" },
+        "주앙 칸셀로": { nation: "포르투갈", club: "바르셀로나", role: "수비수 (DF)", awards: "PL 3회 우승" },
+        "카일 워커": { nation: "잉글랜드", club: "번리", role: "수비수 (DF)", awards: "트레블, PL 6회 우승" },
+        "루크 쇼": { nation: "잉글랜드", club: "맨체스터 유나이티드", role: "수비수 (DF)", awards: "유로파리그 우승" },
+        "네이션 아케": { nation: "네덜란드", club: "페네르바체", role: "수비수 (DF)", awards: "트레블 달성" },
+        "후벵 디아스": { nation: "포르투갈", club: "맨체스터 시티", role: "수비수 (DF)", awards: "PL 올해의 선수, 트레블" },
+        "티아고 실바": { nation: "브라질", club: "FC포르투", role: "수비수 (DF)", awards: "챔스 1회 우승" },
+        "트렌트 알렉산더-아놀드": { nation: "잉글랜드", club: "레알 마드리드", role: "수비수 (DF)", awards: "챔스 1회, PL 1회 우승" },
+        "부카요 사카": { nation: "잉글랜드", club: "아스널", role: "공격수 (FW)", awards: "아스널 올해의 선수 2회" },
+        "크리스티아노 호날두": { nation: "포르투갈", club: "알 나스르", role: "공격수 (FW)", awards: "발롱도르 5회, 챔스 5회 우승" },
+        "에당 아자르": { nation: "벨기에", club: "은퇴", role: "공격수 (FW)", awards: "PL 2회, 챔스 1회 우승" },
+        "헤리 케인": { nation: "잉글랜드", club: "바이에른 뮌헨", role: "공격수 (FW)", awards: "PL 득점왕 3회" },
+        "잭 그릴리쉬": { nation: "잉글랜드", club: "에버튼", role: "공격수 (FW)", awards: "트레블 달성" },
+        "훌리안 알바레즈": { nation: "아르헨티나", club: "아틀레티코 마드리드", role: "공격수 (FW)", awards: "월드컵 우승, 트레블" },
+        "미토마 카오루": { nation: "일본", club: "브라이튼", role: "공격수 (FW)", awards: "PL 이달의 골" },
+        "카림 벤제마": { nation: "프랑스", club: "알 힐랄", role: "공격수 (FW)", awards: "발롱도르 1회, 챔스 5회 우승" },
+        "킬리안 음바페": { nation: "프랑스", club: "레알 마드리드", role: "공격수 (FW)", awards: "월드컵 우승, 득점왕" },
+        "리오넬 메시": { nation: "아르헨티나", club: "인터 마이애미", role: "공격수 (FW)", awards: "발롱도르 8회, 월드컵 우승" },
+        "마커스 래시포드": { nation: "잉글랜드", club: "맨체스터 유나이티드", role: "공격수 (FW)", awards: "FA컵, 리그컵 우승" },
+        "네이마르": { nation: "브라질", club: "산투스", role: "공격수 (FW)", awards: "트레블, 올림픽 금메달" },
+        "올리비에 지루": { nation: "프랑스", club: "릴", role: "공격수 (FW)", awards: "월드컵, 챔스 우승" },
+        "하파엘 레앙": { nation: "포르투갈", club: "AC 밀란", role: "공격수 (FW)", awards: "세리에A MVP" },
+        "로베르트 레반도프스키": { nation: "폴란드", club: "시카고 파이어", role: "공격수 (FW)", awards: "FIFA 올해의 선수 2회, 트레블" },
+        "사디오 마네": { nation: "세네갈", club: "알 나스르", role: "공격수 (FW)", awards: "챔스 우승, PL 득점왕" },
+        "손흥민": { nation: "대한민국", club: "LA FC", role: "공격수 (FW)", awards: "PL 득점왕, 푸스카스상" },
+        "비니시우스 주니오르": { nation: "브라질", club: "레알 마드리드", role: "공격수 (FW)", awards: "챔스 2회 우승" },
+        "아론 램스데일": { nation: "잉글랜드", club: "사우샘프턴", role: "골키퍼 (GK)", awards: "PFA 올해의 팀" },
+        "알리송": { nation: "브라질", club: "리버풀", role: "골키퍼 (GK)", awards: "야신상, 챔스 우승" },
+        "에데르송": { nation: "브라질", club: "페네르바체", role: "골키퍼 (GK)", awards: "트레블, 골든글러브 3회" },
+        "에밀리아노 마르티네스": { nation: "아르헨티나", club: "첼시", role: "골키퍼 (GK)", awards: "월드컵 우승, 야신상" },
+        "티보 쿠르투아": { nation: "벨기에", club: "레알 마드리드", role: "골키퍼 (GK)", awards: "야신상, 챔스 우승" },
+        "베르나르두 실바": { nation: "포르투갈", club: "레알마드리드", role: "미드필더 (MF)", awards: "트레블 달성" },
+        "브루노 페르난데스": { nation: "포르투갈", club: "맨체스터 유나이티드", role: "미드필더 (MF)", awards: "맨유 올해의 선수 3회" },
+        "카세미루": { nation: "브라질", club: "인터 마이애미", role: "미드필더 (MF)", awards: "챔스 5회 우승" },
+        "데클런 라이스": { nation: "잉글랜드", club: "아스널", role: "미드필더 (MF)", awards: "컨퍼런스리그 우승" },
+        "에두아르도 카마빙가": { nation: "프랑스", club: "레알 마드리드", role: "미드필더 (MF)", awards: "챔스 2회 우승" },
+        "엔조 페르난데스": { nation: "아르헨티나", club: "맨체스터 시티", role: "미드필더 (MF)", awards: "월드컵 우승, 영플레이어상" },
+        "일카이 권도안": { nation: "독일", club: "갈라타사라이", role: "미드필더 (MF)", awards: "트레블 달성" },
+        "주드 벨링엄": { nation: "잉글랜드", club: "레알 마드리드", role: "미드필더 (MF)", awards: "골든보이, 챔스 우승" },
+        "케빈 더 브라위너": { nation: "벨기에", club: "나폴리", role: "미드필더 (MF)", awards: "PFA 올해의 선수 2회, 트레블" },
+        "루카 모드리치": { nation: "크로아티아", club: "AC밀란", role: "미드필더 (MF)", awards: "발롱도르 1회, 챔스 6회 우승" },
+        "메이슨 마운트": { nation: "잉글랜드", club: "맨체스터 유나이티드", role: "미드필더 (MF)", awards: "챔스 우승" },
+        "모이세스 카이세도": { nation: "에콰도르", club: "첼시", role: "미드필더 (MF)", awards: "첼시 레코드 이적료" },
+        "페드리": { nation: "스페인", club: "바르셀로나", role: "미드필더 (MF)", awards: "골든보이, 코파 트로피" },
+        "로드리": { nation: "스페인", club: "바르셀로나", role: "미드필더 (MF)", awards: "챔스 결승골, 트레블" }
+    };
+
+    const nationFlags = {
+        "아르헨티나": "https://flagcdn.com/w80/ar.png",
+        "잉글랜드": "https://flagcdn.com/w80/gb-eng.png",
+        "프랑스": "https://flagcdn.com/w80/fr.png",
+        "브라질": "https://flagcdn.com/w80/br.png",
+        "독일": "https://flagcdn.com/w80/de.png",
+        "포르투갈": "https://flagcdn.com/w80/pt.png",
+        "네덜란드": "https://flagcdn.com/w80/nl.png",
+        "벨기에": "https://flagcdn.com/w80/be.png",
+        "일본": "https://flagcdn.com/w80/jp.png",
+        "폴란드": "https://flagcdn.com/w80/pl.png",
+        "세네갈": "https://flagcdn.com/w80/sn.png",
+        "대한민국": "https://flagcdn.com/w80/kr.png",
+        "크로아티아": "https://flagcdn.com/w80/hr.png",
+        "에콰도르": "https://flagcdn.com/w80/ec.png",
+        "스페인": "https://flagcdn.com/w80/es.png"
+    };
+
+    const clubLogos = {
+        "레알 마드리드": "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png",
+        "레알마드리드": "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png",
+        "맨체스터 시티": "https://images.fotmob.com/image_resources/logo/teamlogo/8456.png",
+        "맨체스터 유나이티드": "https://images.fotmob.com/image_resources/logo/teamlogo/10260.png",
+        "아스널": "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
+        "리버풀": "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png",
+        "첼시": "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png",
+        "토트넘 홋스퍼": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+        "바이에른 뮌헨": "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png",
+        "바르셀로나": "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png",
+        "아틀레티코 마드리드": "https://images.fotmob.com/image_resources/logo/teamlogo/8306.png",
+        "AC 밀란": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+        "AC밀란": "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png",
+        "알 나스르": "https://images.fotmob.com/image_resources/logo/teamlogo/102031.png",
+        "알 힐랄": "https://images.fotmob.com/image_resources/logo/teamlogo/102029.png",
+        "인터 마이애미": "https://images.fotmob.com/image_resources/logo/teamlogo/1017551.png",
+        "브라이튼": "https://images.fotmob.com/image_resources/logo/teamlogo/8659.png",
+        "사우샘프턴": "https://images.fotmob.com/image_resources/logo/teamlogo/8466.png",
+        "번리": "https://images.fotmob.com/image_resources/logo/teamlogo/8191.png",
+        "페네르바체": "https://images.fotmob.com/image_resources/logo/teamlogo/8695.png",
+        "FC포르투": "https://images.fotmob.com/image_resources/logo/teamlogo/9773.png",
+        "에버튼": "https://images.fotmob.com/image_resources/logo/teamlogo/8668.png",
+        "산투스": "https://images.fotmob.com/image_resources/logo/teamlogo/9786.png",
+        "릴": "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png",
+        "시카고 파이어": "https://images.fotmob.com/image_resources/logo/teamlogo/8248.png",
+        "갈라타사라이": "https://images.fotmob.com/image_resources/logo/teamlogo/8637.png",
+        "나폴리": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/SSC_Napoli_Logo_2023.svg/150px-SSC_Napoli_Logo_2023.svg.png",
+        "은퇴": "https://cdn-icons-png.flaticon.com/512/3048/3048122.png"
+    };
+
+    const backgroundSafeLogos = [
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8456.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/10260.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8306.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8564.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/9789.png", 
+        "https://images.fotmob.com/image_resources/logo/teamlogo/102031.png" 
+    ];
+
+    // ✨ 중앙을 비우지 않고 전체 영역을 꽉 채우는 방식으로 변경! ✨
+    // 중앙에 생성되는 로고는 불투명한 하얀색 카드 뒤로 자연스럽게 숨겨집니다.
+    function createBackgroundLogos() {
+        const bgContainer = document.getElementById('bgDecoration');
+        
+        // 빛 무리 효과가 지워지지 않도록 로고만 추가
+        const orbs = bgContainer.innerHTML; 
+        bgContainer.innerHTML = orbs;
+
+        const cols = 9;  // 촘촘하게 9칸
+        const rows = 6;  // 세로로 6칸
+        const cellWidth = 100 / cols;
+        const cellHeight = 100 / rows;
+
+        let logoIndex = 0;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                
+                // ❌ 이전처럼 화면 가운데를 강제로 비우는 코드를 삭제했습니다.
+                // 하얀색 메인 카드가 중앙의 로고들을 가려주므로, 테두리가 완벽하게 채워집니다.
+
+                let img = document.createElement('img');
+                img.src = backgroundSafeLogos[logoIndex % backgroundSafeLogos.length];
+                logoIndex++;
+                img.className = 'bg-logo';
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+
+                let randomX = (c * cellWidth) + (1 + Math.random() * (cellWidth - 10));
+                let randomY = (r * cellHeight) + (1 + Math.random() * (cellHeight - 10));
+
+                img.style.left = randomX + '%';
+                img.style.top = randomY + '%';
+
+                img.style.animationDelay = (Math.random() * 5) + 's';
+                img.style.animationDuration = (5 + Math.random() * 5) + 's';
+
+                let size = 70 + Math.random() * 35; // 크고 시원시원한 로고 사이즈 유지
+                img.style.width = size + 'px';
+                img.style.height = size + 'px';
+
+                bgContainer.appendChild(img);
+            }
+        }
+    }
+
+    window.onload = createBackgroundLogos;
+
+    async function init() {
+        const loadingDiv = document.getElementById("loading");
+        const initBtn = document.getElementById("initBtn");
+        
+        initBtn.style.display = "none";
+        loadingDiv.style.display = "block";
+        
+        try {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            
+            loadingDiv.innerText = "✨ 준비 완료! 선수의 사진을 업로드하세요.";
+            setTimeout(() => { loadingDiv.style.display = "none"; }, 1500);
+            document.getElementById("upload-section").style.display = "block";
+        } catch (e) {
+            loadingDiv.style.color = "#ef4444";
+            loadingDiv.innerText = "문제가 생겼습니다. 새로고침 후 다시 시도해주세요.";
+        }
+    }
+
+    function previewAndPredict(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById("info-panel").classList.remove("active");
+            document.getElementById("res-prob-bar").style.width = "0%";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.getElementById('image-preview');
+                const imgWrapper = document.getElementById('image-wrapper');
+                
+                imgElement.src = e.target.result;
+                imgWrapper.style.display = 'block'; 
+                
+                imgElement.onload = () => predict(imgElement);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function predict(imgElement) {
+        const prediction = await model.predict(imgElement);
+        let highestProb = 0;
+        let bestClass = "";
+
+        for (let i = 0; i < maxPredictions; i++) {
+            if (prediction[i].probability > highestProb) {
+                highestProb = prediction[i].probability;
+                bestClass = prediction[i].className;
+            }
+        }
+
+        displayResult(bestClass, highestProb);
+    }
+
+    function displayResult(className, probability) {
+        let matchedName = "정보를 찾을 수 없습니다";
+        let pData = { nation: "-", club: "-", role: "-", awards: "-" };
+
+        for (const name in players) {
+            if (className.includes(name)) {
+                matchedName = name;
+                pData = players[name];
+                break;
+            }
+        }
+
+        document.getElementById("res-name").innerText = matchedName;
+        document.getElementById("res-nation").innerText = pData.nation;
+        document.getElementById("res-club").innerText = pData.club;
+        document.getElementById("res-role").innerText = pData.role;
+        document.getElementById("res-awards").innerText = pData.awards;
+        
+        const nationImgSrc = nationFlags[pData.nation] || "https://cdn-icons-png.flaticon.com/512/861/861512.png";
+        
+        const cleanClubName = pData.club.trim();
+        const clubImgSrc = clubLogos[cleanClubName] || "https://cdn-icons-png.flaticon.com/512/861/861512.png";
+        
+        document.getElementById("res-nation-img").src = nationImgSrc;
+        document.getElementById("res-club-img").src = clubImgSrc;
+
+        const probValue = (probability * 100).toFixed(1);
+        document.getElementById("res-prob-text").innerText = probValue + "%";
+        
+        document.getElementById("info-panel").classList.add("active");
+
+        setTimeout(() => {
+            document.getElementById("res-prob-bar").style.width = probValue + "%";
+        }, 100);
+    }
+</script>
+
+</body>
+</html>
